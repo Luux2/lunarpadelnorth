@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-    baseURL: 'https://lunarsmashunited-api.azurewebsites.net/api',
+    baseURL: 'lunarpadelnorth-api-b3d5fabfcwcpe9az.westeurope-01.azurewebsites.net',
     timeout: 5000,
 });
 
