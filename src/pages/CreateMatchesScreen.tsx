@@ -25,6 +25,7 @@ const CreateMatchesScreen = () => {
     useEffect(() => {
         const fetchPlayers = async () => {
             const response = await PlayerService.getPlayers();
+            console.log(response);
             const sortedPlayers = response.sort((a, b) => a.name.localeCompare(b.name));
             setPlayers(sortedPlayers);
         };
