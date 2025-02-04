@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/f8f6c166-aebf-4d59-876a-047d32e534c1/resourceGroups/api/providers/Microsoft.Web/sites/lunarsmashunited-api",
+    "appService.deploySubpath": "."
+}
