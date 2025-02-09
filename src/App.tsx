@@ -8,6 +8,7 @@ import ViewPracticeTeamsScreen from "./pages/ViewPracticeTeamsScreen.tsx";
 import EditScreen from "./pages/EditScreen.tsx";
 import EditRounds from "./pages/EditRounds.tsx";
 import EditPracticeTeams from "./pages/EditPracticeTeams.tsx";
+import AddPlayersScreen from "./pages/AddPlayersScreen.tsx";
 
 function App() {
 
@@ -22,6 +23,7 @@ function App() {
                 <Route path="/edit" element={<EditScreen/>}/>
                 <Route path="/edit-rounds" element={<EditRounds/>}/>
                 <Route path="/edit-practice-teams" element={<EditPracticeTeams/>}/>
+                <Route path="/addplayers" element={<AddPlayersScreen/>}/>
             </Routes>
         </BrowserRouter>
     )

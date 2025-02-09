@@ -38,6 +38,7 @@ const IndexScreen = () => {
                 <Button className="bg-purple-500 rounded-3xl py-2 font-semibold" onClick={handleViewPracticeTeams}>Se
                     træningshold</Button>
                 <Button className="bg-pink-500 rounded-3xl py-2 font-semibold" onClick={handleEdit}>Rediger runder og træninger</Button>
+                <Button className="bg-cyan-500 rounded-3xl py-2 font-semibold" onClick={() => navigate('/addplayers')}>Tilføj spillere</Button>
             </div>
         </div>
     );

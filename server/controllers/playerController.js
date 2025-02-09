@@ -17,4 +17,10 @@ const postPlayer = async (req, res) => {
     res.json({message: 'Player added'});
 }
 
-module.exports = {getPlayers, postPlayer};
+const deletePlayer = async (req, res) => {
+    const ref = db.ref(`/players/${req.params.id}`);
+    await ref.remove();
+    res.json({message: 'Player deleted'});
+}
+
+module.exports = {getPlayers, postPlayer, deletePlayer};

@@ -8,6 +8,7 @@ const practiceController = require('../controllers/practiceController');
 // Player routes
 router.get('/players', playerController.getPlayers);
 router.post('/players', playerController.postPlayer);
+router.delete('/players/:id', playerController.deletePlayer);
 
 //Round routes
 router.get('/rounds', roundController.getRounds);

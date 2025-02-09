@@ -8,6 +8,15 @@ class PlayerService {
         const response = await apiClient.get('/players');
         return response.data as PlayerInterface[];
     }
+
+    static async addPlayer(player: PlayerInterface): Promise<PlayerInterface> {
+        const response = await apiClient.post('/players', player);
+        return response.data as PlayerInterface;
+    }
+
+    static async deletePlayer(id: string): Promise<void> {
+        await apiClient.delete(`/players/${id}`);
+    }
 }
 
 export default PlayerService;
