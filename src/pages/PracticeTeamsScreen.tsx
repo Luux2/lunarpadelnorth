@@ -13,7 +13,8 @@ registerLocale("da", da);
 const PracticeTeamsScreen = () => {
     const [players, setPlayers] = useState<PlayerInterface[]>([]);
     const [selectedPlayers, setSelectedPlayers] = useState<(PlayerInterface | null)[]>(Array(4).fill(null));
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+    const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -47,8 +48,8 @@ const PracticeTeamsScreen = () => {
             }
 
             // Formatter datoen her, kun når den skal bruges
-            const startTime = formatLocalISOString(selectedDate!);
-            const endTime = formatLocalISOString(new Date(selectedDate!.getTime() + 60 * 60 * 1000));
+            const startTime = formatLocalISOString(selectedStartDate!);
+            const endTime = formatLocalISOString(selectedEndDate!);
 
             const newPracticeTeam = {
                 startTime,
@@ -61,7 +62,8 @@ const PracticeTeamsScreen = () => {
 
             alert("Træningshold oprettet!");
             setSelectedPlayers(Array(4).fill(null));
-            setSelectedDate(null);
+            setSelectedStartDate(null);
+            setSelectedEndDate(null);
         } catch (error) {
             console.error("Fejl ved oprettelse af træningshold:", error);
             alert("Der opstod en fejl ved oprettelse af træningshold.");
@@ -81,14 +83,29 @@ const PracticeTeamsScreen = () => {
                 <h1 className="text-3xl font-semibold text-center">Vælg dato og tid</h1>
                 <div className="flex justify-center">
                     <DatePicker
-                        selected={selectedDate}
-                        onChange={(date) => {setSelectedDate(date);}}
+                        selected={selectedStartDate}
+                        onChange={(date) => {setSelectedStartDate(date);}}
                         showTimeSelect
                         locale="da"
                         timeFormat="HH:mm"
                         timeIntervals={30}
                         showWeekNumbers
-                        placeholderText="Tryk på mig!"
+                        placeholderText="Starttidspunkt"
+                        minDate={new Date()}
+                        dateFormat="dd. MMMM yyyy, HH:mm"
+                        className="w-64 border rounded-md p-2 text-black text-center"
+                    />
+                </div>
+                <div className="flex justify-center">
+                    <DatePicker
+                        selected={selectedEndDate}
+                        onChange={(date) => {setSelectedEndDate(date);}}
+                        showTimeSelect
+                        locale="da"
+                        timeFormat="HH:mm"
+                        timeIntervals={30}
+                        showWeekNumbers
+                        placeholderText="Sluttidspunkt"
                         minDate={new Date()}
                         dateFormat="dd. MMMM yyyy, HH:mm"
                         className="w-64 border rounded-md p-2 text-black text-center"

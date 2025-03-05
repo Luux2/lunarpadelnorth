@@ -7,20 +7,16 @@ class RoundService {
         return response.data as RoundInterface[];
     }
 
-    static async createRound(date: string, matches: MatchInterface[]): Promise<void> {
+    static async createRound(matches: MatchInterface[], startTime: string, endTime: string): Promise<void> {
         const formattedMatches = matches.map(match => ({
-            ...match,
-            team1: {
-                ...match.team1,
-            },
-            team2: {
-                ...match.team2,
-            },
+            team1: { ...match.team1 },
+            team2: { ...match.team2 },
             sidesFixed: match.sidesFixed || false,
         }));
 
-        await apiClient.post(`/rounds/${date}`, { matches: formattedMatches });
+        await apiClient.post(`/rounds`, { matches: formattedMatches, startTime, endTime });
     }
+
 
 
     static async updateMatchTeams(roundId: string, matchId: string, updatedMatch: MatchInterface): Promise<void> {

@@ -1,10 +1,10 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useState} from "react";
 import {PlayerInterface, PracticeTeamInterface} from "../utils/interfaces.ts";
 import PracticeTeamService from "../services/PracticeTeamService.tsx";
 import BackArrow from "../components/BackArrow.tsx";
 import PlayerService from "../services/PlayerService.tsx";
-import {ChevronRightIcon} from "@heroicons/react/24/outline";
-import {format, parse} from "date-fns";
+import {ChevronDownIcon, ChevronRightIcon} from "@heroicons/react/24/outline";
+import {format} from "date-fns";
 import {da} from "date-fns/locale";
 import {registerLocale} from "react-datepicker";
 
@@ -13,7 +13,7 @@ registerLocale("da", da);
 const ViewPracticeTeamsScreen = () => {
     const [practiceTeams, setPracticeTeams] = useState<PracticeTeamInterface[]>([]);
     const [players, setPlayers] = useState<PlayerInterface[]>([]);
-    const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+    const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -42,28 +42,16 @@ const ViewPracticeTeamsScreen = () => {
         return player ? player.name : "Ukendt spiller";
     };
 
-    const groupedTeams = useMemo(() => {
-        const teamsArray = Object.values(practiceTeams); // Konverter objektet til en array
-        const today = new Date(); // Dagens dato
-        return teamsArray
-            .filter((team) => new Date(team.startTime) >= today) // Frasorter hold før i dag
-            .reduce((acc, team) => {
-                const date = format(new Date(team.startTime), "dd/MM/yyyy");
-                if (!acc[date]) {
-                    acc[date] = [];
-                }
-                acc[date].push(team);
-                return acc;
-            }, {} as Record<string, PracticeTeamInterface[]>);
-    }, [practiceTeams]);
+    const toggleDate = (teamId: string) => {
+        setExpandedTeam(expandedTeam === teamId ? null : teamId);
+    };
 
-    useEffect(() => {
-        if (Object.keys(groupedTeams).length > 0) {
-            const firstDate = Object.keys(groupedTeams)[0]; // Få den første dato
-            setExpandedDates(new Set([firstDate])); // Sæt den som åben fra start
-        }
-    }, [groupedTeams]);
-
+    const groupedTeams: Record<string, PracticeTeamInterface[]> = practiceTeams.reduce((acc, team) => {
+        const date = format(new Date(team.startTime), "yyyy-MM-dd");
+        if (!acc[date]) acc[date] = [];
+        acc[date].push(team);
+        return acc;
+    }, {} as Record<string, PracticeTeamInterface[]>);
 
 
 
@@ -76,33 +64,32 @@ const ViewPracticeTeamsScreen = () => {
         <div>
             <BackArrow />
             <h1 className="text-3xl text-center font-semibold">Privat time</h1>
+
             {Object.keys(groupedTeams).length > 0 ? (
                 <ul>
-                    {Object.keys(groupedTeams)
-                        .sort((a, b) =>
-                            parse(a, "dd/MM/yyyy", new Date()).getTime() -
-                            parse(b, "dd/MM/yyyy", new Date()).getTime()
-                        )
-                        .map((date) => (
-                            <li
-                                key={date}
-                                className="border-b-2 pb-4 my-4"
-                            >
-                                <div className="flex justify-between items-center">
-                                    <div className="ml-2 text-lg font-semibold cursor-pointer">{date}</div>
-                                    <ChevronRightIcon
-                                        className={`h-6 mr-2 cursor-pointer transition-transform duration-300 ${
-                                            expandedDates.has(date) ? "rotate-90" : ""
-                                        }`}
-                                    />
-                                </div>
-                                {expandedDates.has(date) && (
-                                    <ul className="mt-4 border-gray-300">
-                                        {groupedTeams[date].map((team) => (
-                                            <li key={`${date}-${team.id}`} className="mb-4">
+                    {Object.entries(groupedTeams).map(([date, teams]) => {
+                        const isExpanded = expandedTeam === date;
+                        return (
+                            <li key={date} className="border-b-2 pb-4 my-4">
+                                <button
+                                    onClick={() => toggleDate(date)}
+                                    className="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-lg font-semibold">
+                                            {format(new Date(date), "EEEE d. MMMM", { locale: da })}
+                                        </span>
+                                        <span className="text-xl">{isExpanded ? <ChevronDownIcon className="h-6"/> : <ChevronRightIcon className="h-6"/>}</span>
+                                    </div>
+                                </button>
+
+                                {isExpanded && (
+                                    <ul className="mt-4 px-4">
+                                        {teams.map((team) => (
+                                            <li key={team.id} className="mb-4">
                                                 <div className="font-semibold mb-3 border-t">
                                                     <p className="p-2">
-                                                        {format(team.startTime, "HH:mm")} - {format(team.endTime, "HH:mm")}
+                                                        {format(new Date(team.startTime), "HH:mm")} - {format(new Date(team.endTime), "HH:mm")}
                                                     </p>
                                                 </div>
                                                 <ul>
@@ -120,14 +107,14 @@ const ViewPracticeTeamsScreen = () => {
                                     </ul>
                                 )}
                             </li>
-                        ))}
+                        );
+                    })}
                 </ul>
             ) : (
                 <p className="text-center mt-10">Ingen kommende træningshold oprettet... endnu!</p>
             )}
         </div>
     );
-
 };
 
 export default ViewPracticeTeamsScreen;

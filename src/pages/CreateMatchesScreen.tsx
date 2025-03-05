@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {ChangeEvent, useEffect, useState} from "react";
 import {
     Listbox,
     ListboxButton,
@@ -8,24 +8,22 @@ import {
 import {MatchInterface, PlayerInterface, TeamInterface} from "../utils/interfaces.ts";
 import PlayerService from "../services/PlayerService.tsx";
 import RoundService from "../services/RoundService.tsx";
-import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
 import BackArrow from "../components/BackArrow.tsx";
+import DatePicker from "react-datepicker";
 
 const CreateMatchesScreen = () => {
-    const navigate = useNavigate();
     const [players, setPlayers] = useState<PlayerInterface[]>([]);
-    const [numPlayers, setNumPlayers] = useState(0); // Antal spillere valgt
     const [numMatches, setNumMatches] = useState(0); // Antal kampe baseret på spillere
+    const [numPlayers, setNumPlayers] = useState(numMatches * 4); // Antal spillere baseret på kampe
     const [selectedPlayers, setSelectedPlayers] = useState<(PlayerInterface | null)[]>(Array(numPlayers).fill(null));
-    const today = format(new Date().toISOString().split("T")[0], "dd-MM-yyyy");
+    const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+    const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
     const [sidesNotFixedMap, setSidesNotFixedMap] = useState<Record<number, boolean>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchPlayers = async () => {
             const response = await PlayerService.getPlayers();
-            console.log(response);
             const sortedPlayers = response.sort((a, b) => a.name.localeCompare(b.name));
             setPlayers(sortedPlayers);
         };
@@ -43,6 +41,12 @@ const CreateMatchesScreen = () => {
             ...prev,
             [matchIndex]: isChecked,
         }));
+    };
+
+    const formatLocalISOString = (date: Date) => {
+        const offset = date.getTimezoneOffset() * 60000;
+        const localDate = new Date(date.getTime() - offset);
+        return localDate.toISOString().replace('Z', '');
     };
 
     const handleConfirmMatches = async () => {
@@ -72,26 +76,33 @@ const CreateMatchesScreen = () => {
         });
 
         try {
-            await RoundService.createRound(today, matches);
-            alert(`Runde ${today} gemt med succes!`);
+            const startTime = formatLocalISOString(selectedStartDate!);
+            const endTime = formatLocalISOString(selectedEndDate!);
+
+
+            await RoundService.createRound(matches, startTime, endTime);
+            alert(`Runde gemt med succes!`);
+            setNumMatches(0);
+            setNumPlayers(0);
             setSelectedPlayers(Array(numPlayers).fill(null));
-            navigate("/rounds");
+            setSelectedStartDate(null);
+            setSelectedEndDate(null);
         } catch (error) {
             console.error("Error saving round:", error);
             alert("Der opstod en fejl under gemning af runden.");
         }
     };
 
-    const handleSetPlayers = (playersCount: number) => {
-        setNumPlayers(playersCount);
-        setNumMatches(playersCount / 2);
-        setSelectedPlayers(Array(playersCount).fill(null));
+    const handleSetMatches = (event: ChangeEvent<HTMLInputElement>) => {
+        let matchCount = parseInt(event.target.value, 10);
+        if (isNaN(matchCount) || matchCount < 0 ) {
+            matchCount = 0;
+        }
+        setNumMatches(matchCount);
+        const playerCount = matchCount * 4;
+        setNumPlayers(playerCount);
+        setSelectedPlayers(Array(playerCount).fill(null));
     };
-
-    const courts =
-        [
-            "Bane 8", "Bane 9", "Bane 10", "Bane 11", "Bane 12", "Bane 7"
-        ];
 
     if (isLoading) {
         return <p className="text-center mt-10">Indlæser spillere...</p>;
@@ -100,32 +111,63 @@ const CreateMatchesScreen = () => {
     return (
         <>
             <BackArrow />
+            <h1 className="text-3xl font-semibold text-center">Indtast antal kampe</h1>
+
             <div className="flex justify-center space-x-4 mb-10 mt-4">
-                { [12, 16, 20, 24].map((num) => (
-                    <button
-                        key={num}
-                        className={`rounded-xl border-2 border-[#232E39] p-2 ${numPlayers === num ? "bg-green-500" : ""}`}
-                        onClick={() => handleSetPlayers(num)}
-                    >
-                        {num} spillere
-                    </button>
-                ))}
+                <input
+                    type="number"
+                    min="1"
+                    className="border rounded-md p-2 text-black text-center w-64"
+                    placeholder="Antal kampe"
+                    value={numMatches || ""}
+                    onChange={handleSetMatches}
+                />
             </div>
 
-            {Array.from({ length: numMatches }).map((_, groupIndex) => {
-                const numCourtsInUse = Math.ceil(numMatches / 2); // Dynamisk antal baner
-                const courtIndex = groupIndex % numCourtsInUse; // Gentag baner efter behov
+                <h1 className="text-3xl font-semibold text-center">Vælg dato og tid</h1>
+                <div className="flex justify-center my-4">
+                    <DatePicker
+                        selected={selectedStartDate}
+                        onChange={(date) => {setSelectedStartDate(date)}}
+                        showTimeSelect
+                        locale="da"
+                        timeFormat="HH:mm"
+                        timeIntervals={30}
+                        showWeekNumbers
+                        placeholderText="Starttidspunkt"
+                        minDate={new Date()}
+                        dateFormat="dd. MMMM yyyy, HH:mm"
+                        className="w-64 border rounded-md p-2 text-black text-center"
+                    />
+            </div>
+            <div className="flex justify-center mb-10">
+                <DatePicker
+                    selected={selectedEndDate}
+                    onChange={(date) => {setSelectedEndDate(date)}}
+                    showTimeSelect
+                    locale="da"
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
+                    showWeekNumbers
+                    placeholderText="Sluttidspunkt"
+                    minDate={new Date()}
+                    dateFormat="dd. MMMM yyyy, HH:mm"
+                    className="w-64 border rounded-md p-2 text-black text-center"
+                />
+            </div>
+
+            {Array.from({ length: numMatches }).map((_, matchIndex) => {
 
                 return (
-                    <div key={groupIndex} className="mb-10">
+                    <div key={matchIndex} className="mb-10">
                         <h2 className="text-2xl font-semibold text-center mb-4">
-                            {courts[courtIndex]}
+                            Kamp {matchIndex + 1}
                         </h2>
                         <div className="grid grid-cols-2 gap-4 mx-1">
                             <h1 className="text-center font-semibold">Venstre side</h1>
                             <h1 className="text-center font-semibold">Højre side</h1>
                             {Array.from({ length: 4 }).map((_, index) => {
-                                const globalIndex = groupIndex * 4 + index;
+                                const globalIndex = matchIndex * 4 + index;
 
                                 return (
                                     <Listbox
@@ -162,7 +204,7 @@ const CreateMatchesScreen = () => {
                                 <input
                                     type="checkbox"
                                     className="h-5 w-5"
-                                    onChange={(e) => handleSidesNotFixedChange(groupIndex, e.target.checked)}
+                                    onChange={(e) => handleSidesNotFixedChange(matchIndex, e.target.checked)}
                                 />
                                 <span>Sider ikke fastlagt</span>
                             </label>

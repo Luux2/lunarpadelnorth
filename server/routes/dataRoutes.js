@@ -12,7 +12,7 @@ router.delete('/players/:id', playerController.deletePlayer);
 
 //Round routes
 router.get('/rounds', roundController.getRounds);
-router.post('/rounds/:date', roundController.postRound);
+router.post('/rounds', roundController.postRound);
 router.patch('/rounds/:roundId/:matchId', roundController.updateMatchTeams);
 
 //Practice routes

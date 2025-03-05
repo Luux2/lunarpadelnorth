@@ -4,22 +4,24 @@ import {useEffect, useState} from "react";
 import { PlayerInterface, RoundInterface } from "../utils/interfaces";
 import RoundService from "../services/RoundService";
 import PlayerService from "../services/PlayerService";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { da } from "date-fns/locale";
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from "@headlessui/react";
+import {ChevronDownIcon, ChevronRightIcon} from "@heroicons/react/24/outline";
 
 const EditRounds = () => {
     const [rounds, setRounds] = useState<RoundInterface[]>([]);
     const [players, setPlayers] = useState<PlayerInterface[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [expandedRounds, setExpandedRounds] = useState<Record<string, boolean>>({});
+    const [expandedRound, setExpandedRound] = useState<string | null>(null);
     const [selectedMatch, setSelectedMatch] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchRounds = async () => {
             const response = await RoundService.getRounds();
-            setRounds(response);
+            const sortedResponse = response.sort((a, b) => a.startTime.localeCompare(b.startTime));
+            setRounds(sortedResponse);
         };
 
         const fetchPlayers = async () => {
@@ -36,18 +38,10 @@ const EditRounds = () => {
         return player ? player.name : "Ukendt spiller";
     };
 
-    const toggleExpand = (roundId: string) => {
-        setExpandedRounds((prevState) => ({
-            ...prevState,
-            [roundId]: !prevState[roundId],
-        }));
-    };
-
     const openModal = (match: any, roundId: string) => {
         setSelectedMatch({ ...match, roundId }); // Inkluder hele match-objektet
         setIsModalOpen(true);
 
-        console.log("Selected Match:", { ...match, roundId }); // Debug-log
     };
 
 
@@ -66,11 +60,12 @@ const EditRounds = () => {
                 },
             }));
 
-            console.log("Updated Team:", selectedMatch[team]); // Debug-log
         }
     };
 
-
+    const toggleRound = (roundId: string) => {
+        setExpandedRound(expandedRound === roundId ? null : roundId); // Lukker hvis allerede åben, ellers åbner
+    };
 
 
 
@@ -82,8 +77,6 @@ const EditRounds = () => {
                 console.error("roundId or matchId is missing");
                 return;
             }
-
-            console.log("Sending to backend:", { team1, team2 }); // Debug-log
 
             // Send hele team1 og team2, inklusive sidesFixed
             RoundService.updateMatchTeams(roundId, matchId, {
@@ -107,11 +100,6 @@ const EditRounds = () => {
         }
     };
 
-    const courts =
-        [
-            "Bane 8", "Bane 9", "Bane 10", "Bane 11", "Bane 12", "Bane 7"
-        ];
-
 
     if (isLoading) {
         return <p className="text-center mt-10">Indlæser runder...</p>;
@@ -124,55 +112,59 @@ const EditRounds = () => {
 
             {rounds.length > 0 ? (
                 <ul>
-                    {rounds.map((round) => (
-                        <li key={round.id} className="border-b-2 pb-4 my-4">
-                            <div
-                                className="ml-4 text-lg font-semibold cursor-pointer"
-                                onClick={() => toggleExpand(round.id)}
-                            >
-                                {format(parse(round.id, "dd-MM-yyyy", new Date()), "eeee, dd. MMMM", {
-                                    locale: da,
-                                })}
-                                <span className="ml-2 text-sm italic">
-                                    ({expandedRounds[round.id] ? "Skjul" : "Vis"} kampe)
-                                </span>
-                            </div>
-                            {expandedRounds[round.id] && (
-                                <ul className="mt-4 px-4">
-                                    {round.matches.map((match, index) => {
-                                        const numCourtsInUse = Math.ceil(round.matches.length / 2); // Dynamisk antal baner
-                                        const courtIndex = index % numCourtsInUse; // Gentag baner
+                    {rounds.map((round) => {
+                        const isExpanded = expandedRound === round.id;
+                        return (
+                            <li key={round.id} className="border-b-2 pb-4 my-4">
+                                <button
+                                    onClick={() => toggleRound(round.id!)}
+                                    className="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-lg font-semibold">
+                                            {format(new Date(round.startTime), "EEEE d. MMMM", { locale: da })}, {" "}
+                                            {format(new Date(round.startTime), "HH:mm", { locale: da })} -{" "}
+                                            {format(new Date(round.endTime), "HH:mm", { locale: da })}
+                                        </span>
+                                        <span className="text-xl">{isExpanded ? <ChevronDownIcon className="h-6"/> : <ChevronRightIcon className="h-6"/>}</span>
+                                    </div>
+                                </button>
 
-                                        return (
-                                            match.id && (
-                                                <li
-                                                    key={match.id}
-                                                    className="mb-4 p-2 border-2 border-[#232e39] rounded-xl cursor-pointer"
-                                                    onClick={() => openModal(match, round.id)}
-                                                >
-                                                    <h2 className="text-xl font-semibold text-center mb-2">
-                                                        {courts[courtIndex]} {/* Viser det korrekte banenavn */}
-                                                    </h2>
-                                                    <p className="font-semibold">
-                                                        {getPlayerName(match.team1.player1)} &{" "}
-                                                        {getPlayerName(match.team1.player2)}
-                                                    </p>
-                                                    <p>vs</p>
-                                                    <p className="font-semibold">
-                                                        {getPlayerName(match.team2.player1)} &{" "}
-                                                        {getPlayerName(match.team2.player2)}
-                                                    </p>
-                                                    <p className="mt-2 italic">
-                                                        {!match.sidesFixed ? "Sider ikke fastlåst" : ""}
-                                                    </p>
-                                                </li>
-                                            )
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                        </li>
-                    ))}
+                                {isExpanded && (
+                                    <ul className="mt-4 px-4">
+                                        {round.matches.map((match, index) => {
+
+                                            return (
+                                                match.id && (
+                                                    <li
+                                                        key={match.id}
+                                                        className="mb-4 p-2 border-2 border-[#232e39] rounded-xl cursor-pointer"
+                                                        onClick={() => openModal(match, round.id!)}
+                                                    >
+                                                        <h2 className="text-xl font-semibold text-center mb-2">
+                                                            Kamp {index + 1}
+                                                        </h2>
+                                                        <p className="font-semibold">
+                                                            {getPlayerName(match.team1.player1)} &{" "}
+                                                            {getPlayerName(match.team1.player2)}
+                                                        </p>
+                                                        <p>vs</p>
+                                                        <p className="font-semibold">
+                                                            {getPlayerName(match.team2.player1)} &{" "}
+                                                            {getPlayerName(match.team2.player2)}
+                                                        </p>
+                                                        <p className="mt-2 italic">
+                                                            {!match.sidesFixed ? "Sider ikke fastlåst" : ""}
+                                                        </p>
+                                                    </li>
+                                                )
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </li>
+                        );
+                    })}
                 </ul>
             ) : (
                 <p className="text-center mt-10">Ingen kommende kampe sat... endnu!</p>

@@ -17,8 +17,10 @@ export interface MatchInterface {
 }
 
 export interface RoundInterface {
-    id: string;
+    id?: string;
     matches: MatchInterface[];
+    startTime: string;
+    endTime: string;
 }
 
 export interface PracticeTeamInterface {

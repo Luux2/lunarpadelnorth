@@ -8,22 +8,41 @@ const getRounds = async (req, res) => {
             const data = snapshot.val();
 
             const roundsArray = data
-                ? Object.keys(data).map(key => ({
-                    id: key,
-                    matches: Object.keys(data[key]).map(matchKey => ({
-                        id: matchKey,
-                        team1: {
-                            player1: data[key][matchKey].team1.player1,
-                            player2: data[key][matchKey].team1.player2,
-                        },
-                        team2: {
-                            player1: data[key][matchKey].team2.player1,
-                            player2: data[key][matchKey].team2.player2,
-                        },
-                        sidesFixed: data[key][matchKey].sidesFixed || false,
-                    })),
-                }))
+                ? Object.keys(data).map(key => {
+                    const round = data[key];
+
+                    // Filtrér noder, der ikke er startTime eller endTime
+                    const matches = Object.keys(round)
+                        .filter(matchKey => matchKey !== "startTime" && matchKey !== "endTime")
+                        .map(matchKey => {
+                            const match = round[matchKey];
+
+                            // Sikrer, at både team1 og team2 eksisterer
+                            if (!match || !match.team1 || !match.team2) return null;
+
+                            return {
+                                id: matchKey,
+                                team1: {
+                                    player1: match.team1.player1 || null,
+                                    player2: match.team1.player2 || null,
+                                },
+                                team2: {
+                                    player1: match.team2.player1 || null,
+                                    player2: match.team2.player2 || null,
+                                },
+                                sidesFixed: match.sidesFixed || false,
+                            };
+                        }).filter(match => match !== null);
+
+                    return {
+                        id: key,
+                        startTime: round.startTime || null,
+                        endTime: round.endTime || null,
+                        matches,
+                    };
+                })
                 : [];
+
             res.json(roundsArray);
         });
     } catch (error) {
@@ -35,27 +54,25 @@ const getRounds = async (req, res) => {
 
 
 
+
 // Gem en ny runde
 const postRound = async (req, res) => {
-    const { matches } = req.body;
-    const { date } = req.params;
+    const { matches, startTime, endTime } = req.body;
 
-    if (!date || !matches || !Array.isArray(matches) || matches.length === 0) {
-        return res.status(400).json({ message: "Invalid input data. Ensure matches and date are provided." });
+    if (!matches || !Array.isArray(matches) || matches.length === 0) {
+        return res.status(400).json({ message: "Invalid input data. Ensure matches are provided." });
     }
 
     try {
-        const roundRef = db.ref(`/rounds/${date}`);
+        const roundsRef = db.ref(`/rounds`);
+        const newRoundRef = roundsRef.push(); // Genererer et unikt ID til runden
 
+        // Funktion til at fjerne undefined felter
         const removeUndefinedFields = (obj) => {
-            return Object.entries(obj).reduce((acc, [key, value]) => {
-                if (value !== undefined) {
-                    acc[key] = value;
-                }
-                return acc;
-            }, {});
+            return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== undefined));
         };
 
+        // Klargør kampene
         const formattedMatches = matches.map(match => ({
             team1: removeUndefinedFields({
                 player1: match.team1.player1,
@@ -68,10 +85,19 @@ const postRound = async (req, res) => {
             sidesFixed: match.sidesFixed || false,
         }));
 
-        const promises = formattedMatches.map(match => roundRef.push(match));
-        await Promise.all(promises);
+        // Strukturér runde-data med kampene direkte under runden
+        const roundData = {
+            startTime: startTime || null,
+            endTime: endTime || null,
+            ...Object.fromEntries(
+                formattedMatches.map((match, index) => [`match${index + 1}`, match])
+            ),
+        };
 
-        res.json({ message: "Round added" });
+        // Gem hele runden i Firebase
+        await newRoundRef.set(roundData);
+
+        res.json({ message: "Round added", roundId: newRoundRef.key });
     } catch (error) {
         console.error("Error saving round:", error);
         res.status(500).json({ message: "Failed to save round" });
@@ -80,11 +106,13 @@ const postRound = async (req, res) => {
 
 
 
+
+
+
 const updateMatchTeams = async (req, res) => {
     const { roundId, matchId } = req.params;
     const { team1, team2 } = req.body;
 
-    console.log("Received in backend:", { roundId, matchId, team1, team2 }); // Debug-log
 
     if (!roundId || !matchId || !team1 || !team2) {
         return res.status(400).json({ message: "Missing required parameters or body data" });
