@@ -51,6 +51,8 @@ const RoundsScreen = () => {
         setExpandedRound(expandedRound === roundId ? null : roundId); // Lukker hvis allerede åben, ellers åbner
     };
 
+    const matchNames = ["Tekniktræning", "Kamp 1", "Kamp 2", "Kamp 3", "Kamp 4"];
+
     if (isLoading) {
         return <p className="text-center mt-10">Indlæser runder...</p>;
     }
@@ -96,7 +98,7 @@ const RoundsScreen = () => {
                                                             className="mb-4 p-2 border-2 border-[#232e39] rounded-xl"
                                                         >
                                                             <h2 className="text-xl font-semibold text-center mb-2">
-                                                                Kamp {index + 1}
+                                                                {matchNames[index]}
                                                             </h2>
                                                             <p className="font-semibold">
                                                                 {getPlayerName(match.team1.player1)} &{" "}

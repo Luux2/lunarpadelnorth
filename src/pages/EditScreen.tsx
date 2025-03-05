@@ -21,8 +21,8 @@ const EditScreen = () => {
             <div className="flex flex-col space-y-10 text-center w-64">
                 <h1 className="text-3xl text-center font-semibold">Hvad vil du redigere?</h1>
 
-                <Button className="bg-orange-500 rounded-3xl py-2 font-semibold" onClick={handleEditRounds}>Træningskampe</Button>
-                <Button className="bg-purple-500 rounded-3xl py-2 font-semibold" onClick={handleViewPracticeTeams}>Privat time</Button>
+                <Button className="bg-orange-500 rounded-3xl py-2 font-semibold" onClick={handleEditRounds}>Rediger runde</Button>
+                <Button className="bg-purple-500 rounded-3xl py-2 font-semibold hidden" onClick={handleViewPracticeTeams}>Privat time</Button>
             </div>
         </div>
         </div>

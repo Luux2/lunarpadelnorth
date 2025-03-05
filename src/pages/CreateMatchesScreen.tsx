@@ -56,7 +56,7 @@ const CreateMatchesScreen = () => {
         }
 
         const matches: MatchInterface[] = Array.from({ length: numMatches }).map((_, matchIndex) => {
-            const sidesNotFixed = sidesNotFixedMap[matchIndex]; // Tjek om sider ikke er fastlagt
+            const sidesNotFixed = sidesNotFixedMap[matchIndex];
 
             const team1: TeamInterface = {
                 player1: selectedPlayers[matchIndex * 4]!.id as string,
@@ -76,6 +76,10 @@ const CreateMatchesScreen = () => {
         });
 
         try {
+            if (matches.length === 0) {
+                alert("Du skal tilføje mindst én kamp!");
+                return;
+            }
             const startTime = formatLocalISOString(selectedStartDate!);
             const endTime = formatLocalISOString(selectedEndDate!);
 
@@ -104,6 +108,8 @@ const CreateMatchesScreen = () => {
         setSelectedPlayers(Array(playerCount).fill(null));
     };
 
+    const matchNames = ["Tekniktræning", "Kamp 1", "Kamp 2", "Kamp 3", "Kamp 4"];
+
     if (isLoading) {
         return <p className="text-center mt-10">Indlæser spillere...</p>;
     }
@@ -117,6 +123,7 @@ const CreateMatchesScreen = () => {
                 <input
                     type="number"
                     min="1"
+                    max="4"
                     className="border rounded-md p-2 text-black text-center w-64"
                     placeholder="Antal kampe"
                     value={numMatches || ""}
@@ -161,7 +168,7 @@ const CreateMatchesScreen = () => {
                 return (
                     <div key={matchIndex} className="mb-10">
                         <h2 className="text-2xl font-semibold text-center mb-4">
-                            Kamp {matchIndex + 1}
+                            {matchNames[matchIndex]}
                         </h2>
                         <div className="grid grid-cols-2 gap-4 mx-1">
                             <h1 className="text-center font-semibold">Venstre side</h1>

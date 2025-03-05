@@ -5,15 +5,24 @@ const BackArrow = () => {
     const navigate = useNavigate();
 
     const handleNavigateBack = () => {
-        navigate(-1);
-    }
+        if (window.history.length > 1) {
+            navigate(-1); // ✅ Gå tilbage, hvis muligt
+        } else {
+            navigate("/"); // ✅ Send brugeren til en sikker fallback-side
+        }
+    };
+
 
 
     return (
         <>
-            <div className="ml-3 mt-5 h-8 w-8 shrink-0 rounded-full p-1 border bg-[#4e4e4e]">
-                <ArrowLongLeftIcon className="h-full w-full rounded-full text-white" onClick={handleNavigateBack}/>
+            <div
+                onClick={handleNavigateBack} // 🚀 Klik kan nu registreres over hele området
+                className="ml-3 mt-5 h-8 w-8 shrink-0 rounded-full p-1 border bg-[#4e4e4e] cursor-pointer flex items-center justify-center"
+            >
+                <ArrowLongLeftIcon className="h-full w-full text-white" />
             </div>
+
 
         </>
     )

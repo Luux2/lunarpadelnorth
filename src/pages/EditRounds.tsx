@@ -100,6 +100,9 @@ const EditRounds = () => {
         }
     };
 
+    const matchNames = ["Tekniktræning", "Kamp 1", "Kamp 2", "Kamp 3", "Kamp 4"];
+
+
 
     if (isLoading) {
         return <p className="text-center mt-10">Indlæser runder...</p>;
@@ -142,7 +145,7 @@ const EditRounds = () => {
                                                         onClick={() => openModal(match, round.id!)}
                                                     >
                                                         <h2 className="text-xl font-semibold text-center mb-2">
-                                                            Kamp {index + 1}
+                                                            {matchNames[index]}
                                                         </h2>
                                                         <p className="font-semibold">
                                                             {getPlayerName(match.team1.player1)} &{" "}
