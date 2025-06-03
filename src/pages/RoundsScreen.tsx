@@ -51,7 +51,7 @@ const RoundsScreen = () => {
         setExpandedRound(expandedRound === roundId ? null : roundId); // Lukker hvis allerede åben, ellers åbner
     };
 
-    const matchNames = ["Tekniktræning", "Kamp 1", "Kamp 2", "Kamp 3", "Kamp 4"];
+    const matchNames = ["Bane 1", "Bane 2", "Bane 3", "Bane 4", "Bane 5"];
 
     if (isLoading) {
         return <p className="text-center mt-10">Indlæser runder...</p>;
